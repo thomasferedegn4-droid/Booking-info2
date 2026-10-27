@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>International Travel Phone Booking - Interactive Dialogue Quiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .word-btn.selected {
+            background-color: #3b82f6 !important;
+            color: white !important;
+            border-color: #1d4ed8 !important;
+        }
+        .correct-bg {
+            background-color: #d1fae5 !important;
+            border-color: #10b981 !important;
+            color: #065f46 !important;
+        }
+        .incorrect-bg {
+            background-color: #fee2e2 !important;
+            border-color: #ef4444 !important;
+            color: #991b1b !important;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 font-sans flex flex-col justify-between">
+
+    <!-- Header Navigation -->
+    <header class="bg-indigo-900 text-white shadow-md">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid fa-plane-departure text-amber-400 text-2xl"></i>
+                <h1 class="text-xl font-bold tracking-wide">Global Travel Services | Practice Portal</h1>
+            </div>
+            <div id="timerContainer" class="hidden flex items-center bg-indigo-950 px-3 py-1.5 rounded-lg border border-indigo-700">
+                <i class="fa-solid fa-clock text-amber-400 mr-2"></i>
+                <div id="timer" style="text-align: right; font-weight: bold; color: #e74c3c; padding: 10px;">Time: 10:00</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-4xl mx-auto w-full p-4 md:p-6 flex-grow">
+
+        <!-- STEP 1: Registration Form -->
+        <div id="registrationCard" class="bg-white rounded-2xl shadow-xl p-6 md:p-8 border border-slate-200">
+            <div class="text-center mb-6">
+                <span class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">English Dialogue Assessment</span>
+                <h2 class="text-2xl font-extrabold text-slate-900 mt-2">Phone Booking Dialogue Test</h2>
+                <p class="text-slate-600 text-sm mt-1">Complete the phone booking interaction by placing the correct vocabulary words in the appropriate dialogue blanks.</p>
+            </div>
+
+            <form id="startForm" onsubmit="handleStartQuiz(event)" class="space-y-4 max-w-md mx-auto bg-slate-50 p-6 rounded-xl border border-slate-200">
+                <div>
+                    <label for="fullName" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Full Name</label>
+                    <input type="text" id="fullName" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="e.g. Jane Doe" required>
+                </div>
+                <div>
+                    <label for="studentId" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">ID Number / Student ID</label>
+                    <input type="text" id="studentId" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="e.g. ST-2026-88" required>
+                </div>
+                <button type="submit" id="startBtn" class="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition duration-200 flex items-center justify-center gap-2 shadow-lg shadow-indigo-200">
+                    <i class="fa-solid fa-play"></i> Start Assessment
+                </button>
+            </form>
+        </div>
+
+        <!-- STEP 2: Interactive Quiz View -->
+        <div id="quizContainer" class="hidden space-y-6">
+
+            <!-- Dialogue Narrator Header -->
+            <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                        <i class="fa-solid fa-headset"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-indigo-900">Audio Narrator (British Accent)</h3>
+                        <p class="text-xs text-indigo-700">Listen to the dialogue text narrated in British RP.</p>
+                    </div>
+                </div>
+                <button type="button" onclick="narrateCurrentStep()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition">
+                    <i class="fa-solid fa-volume-high"></i> Listen
+                </button>
+            </div>
+
+            <!-- Clickable Word Bank -->
+            <div class="bg-white rounded-xl shadow-md p-5 border border-slate-200">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Word Bank (Click a word, then click "Place Word")</h3>
+                    <button type="button" onclick="clearWordSelection()" class="text-xs text-indigo-600 hover:underline">Clear Selection</button>
+                </div>
+                <div id="wordBank" class="flex flex-wrap gap-2.5">
+                    <!-- Dynamic Word Bank Items -->
+                </div>
+            </div>
+
+            <!-- Single Question Card View -->
+            <div id="questionCard" class="bg-white rounded-xl shadow-md p-6 border border-slate-200">
+                <div class="flex justify-between items-center mb-4">
+                    <span id="questionProgress" class="text-xs font-semibold bg-indigo-100 text-indigo-800 px-2.5 py-1 rounded-md">Blank 1 of 10</span>
+                    <span id="speakerTag" class="text-xs font-bold text-slate-500">Speaker: Agent</span>
+                </div>
+
+                <!-- Dialogue Context Display -->
+                <div class="bg-slate-50 border-l-4 border-indigo-500 p-4 rounded-r-lg mb-6">
+                    <p id="dialogueContextText" class="text-slate-800 text-base leading-relaxed"></p>
+                </div>
+
+                <!-- Target Blank Selection -->
+                <div class="space-y-4">
+                    <p class="text-sm font-medium text-slate-600">Selected word for blank (<span id="blankNumDisplay">1</span>):</p>
+                    <div class="flex flex-col sm:flex-row items-center gap-3">
+                        <div id="targetBlankBox" class="w-full sm:flex-grow p-3 border-2 border-dashed border-slate-300 rounded-lg text-center font-bold text-lg min-h-[50px] flex items-center justify-center bg-slate-50">
+                            [ Select a word above ]
+                        </div>
+                        <button type="button" id="placeWordBtn" onclick="applySelectedWord()" class="w-full sm:w-auto bg-indigo-600 text-white px-5 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition">Place Word</button>
+                    </div>
+                </div>
+
+                <!-- Instant Feedback Area -->
+                <div id="instantFeedback" class="hidden mt-6 p-4 rounded-xl border">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Controls / Navigation -->
+            <div class="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <button type="button" id="backBtn" onclick="navigateQuestion(-1)" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold px-4 py-2 rounded-lg text-sm flex items-center gap-2 transition disabled:opacity-50">
+                    <i class="fa-solid fa-arrow-left"></i> Back
+                </button>
+                <button type="button" id="skipBtn" onclick="navigateQuestion(1)" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold px-4 py-2 rounded-lg text-sm flex items-center gap-2 transition">
+                    Skip / Next <i class="fa-solid fa-arrow-right"></i>
+                </button>
+                <button type="button" id="submitBtn" onclick="submitAssessment()" class="hidden bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2 rounded-lg text-sm flex items-center gap-2 shadow-md transition">
+                    <i class="fa-solid fa-check-circle"></i> Submit Test
+                </button>
+            </div>
+        </div>
+
+        <!-- STEP 3: Results & Teacher Dashboard View -->
+        <div id="resultsContainer" class="hidden space-y-6">
+            <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 border border-slate-200 text-center">
+                <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">
+                    <i class="fa-solid fa-trophy"></i>
+                </div>
+                <h2 class="text-2xl font-extrabold text-slate-900">Assessment Completed!</h2>
+                <p class="text-slate-600 text-sm mt-1">Here is the detailed evaluation summary for your submission.</p>
+
+                <!-- Student & Score Summary Dashboard -->
+                <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <p class="text-xs font-bold text-slate-500 uppercase">Student Name</p>
+                        <p id="resFullName" class="text-base font-extrabold text-slate-800 mt-0.5">-</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <p class="text-xs font-bold text-slate-500 uppercase">Student ID</p>
+                        <p id="resStudentId" class="text-base font-extrabold text-slate-800 mt-0.5">-</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <p class="text-xs font-bold text-slate-500 uppercase">Final Score</p>
+                        <p id="resScore" class="text-xl font-black text-indigo-600 mt-0.5">0 / 10 (0%)</p>
+                    </div>
+                </div>
+
+                <!-- Score Submission via Email Action -->
+                <div class="mt-6 bg-indigo-50 border border-indigo-200 p-4 rounded-xl flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="text-left">
+                        <p class="text-sm font-bold text-indigo-900">Submit Score to Instructor</p>
+                        <p class="text-xs text-indigo-700">Send report to: <strong>mesayferedegn2@gmail.com</strong></p>
+                    </div>
+                    <a id="emailBtn" href="#" target="_blank" class="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 shadow transition">
+                        <i class="fa-solid fa-paper-plane"></i> Send Score via Email
+                    </a>
+                </div>
+            </div>
+
+            <!-- Complete Answer Key & Detailed Review -->
+            <div class="bg-white rounded-xl shadow-md p-6 border border-slate-200">
+                <h3 class="text-lg font-bold text-slate-900 mb-4 border-b pb-2">Detailed Question Review & Explanations</h3>
+                <div id="detailedReview" class="space-y-4">
+                    <!-- Detailed items dynamically generated -->
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-4 text-center text-xs mt-8">
+        <p>© 2026 Global Travel Services | Educational Instructional Design System</p>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        const wordsList = [
+            "one-way", "return", "date", "fully booked", "alternative",
+            "Business Class", "preference", "window seat", "full name", "passport number"
+        ];
+
+        const questions = [
+            {
+                blankIndex: 1,
+                speaker: "Agent",
+                context: "I can certainly help with that. Would you like a (1) __________ or a (2) __________ ticket?",
+                correctAnswer: "one-way",
+                explanation: "'One-way' refers to travel in a single direction without a return flight planned."
+            },
+            {
+                blankIndex: 2,
+                speaker: "Agent",
+                context: "I can certainly help with that. Would you like a (1) [one-way] or a (2) __________ ticket?",
+                correctAnswer: "return",
+                explanation: "'Return' (or round-trip) refers to a ticket that takes you to a destination and brings you back."
+            },
+            {
+                blankIndex: 3,
+                speaker: "Agent",
+                context: "Understood. Could you confirm the (3) __________ you are looking for?",
+                correctAnswer: "date",
+                explanation: "'Date' asks for the specific calendar day planned for travel (e.g., Wednesday, April 8th)."
+            },
+            {
+                blankIndex: 4,
+                speaker: "Agent",
+                context: "Let me check the morning departures... I’m sorry, that flight is (4) __________.",
+                correctAnswer: "fully booked",
+                explanation: "'Fully booked' means there are no available seats remaining on that specific flight."
+            },
+            {
+                blankIndex: 5,
+                speaker: "Agent",
+                context: "Would you like an (5) __________? We have a seat available on the evening flight at 9:00 PM.",
+                correctAnswer: "alternative",
+                explanation: "'Alternative' refers to another available choice or option when the primary choice is unavailable."
+            },
+            {
+                blankIndex: 6,
+                speaker: "Foreigner",
+                context: "I’ll take (6) __________, please. It’s a long journey and I'd like to be comfortable.",
+                correctAnswer: "Business Class",
+                explanation: "'Business Class' offers superior seating comfort suitable for long-haul international flights."
+            },
+            {
+                blankIndex: 7,
+                speaker: "Agent",
+                context: "Regarding your position on the plane, do you have a (7) __________, such as an aisle or a (8) __________?",
+                correctAnswer: "preference",
+                explanation: "'Preference' refers to a specific choice or liking for one option over another."
+            },
+            {
+                blankIndex: 8,
+                speaker: "Agent",
+                context: "do you have a preference, such as an aisle or a (8) __________?",
+                correctAnswer: "window seat",
+                explanation: "'Window seat' is a seat located next to the airplane window."
+            },
+            {
+                blankIndex: 9,
+                speaker: "Agent",
+                context: "To secure the reservation, may I have your (9) __________ and (10) __________, please?",
+                correctAnswer: "full name",
+                explanation: "'Full name' asks for the traveler's official given and family name."
+            },
+            {
+                blankIndex: 10,
+                speaker: "Agent",
+                context: "may I have your full name and (10) __________, please?",
+                correctAnswer: "passport number",
+                explanation: "'Passport number' is the official identification code required for international flight bookings."
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let selectedWord = null;
+        let userAnswers = Array(questions.length).fill(null);
+        let answeredLocked = Array(questions.length).fill(false);
+        let studentInfo = { name: '', id: '' };
+        let timerSeconds = 600;
+        let timerInterval = null;
+
+        function startTimer() {
+            document.getElementById('timerContainer').classList.remove('hidden');
+            timerInterval = setInterval(() => {
+                timerSeconds--;
+                let mins = Math.floor(timerSeconds / 60);
+                let secs = timerSeconds % 60;
+                document.getElementById('timer').innerText = `Time: ${mins}:${secs < 10 ? '0' : ''}${secs}`;
+                
+                if (timerSeconds <= 0) {
+                    clearInterval(timerInterval);
+                    submitAssessment();
+                }
+            }, 1000);
+        }
+
+        function handleStartQuiz(event) {
+            event.preventDefault();
+            const nameInput = document.getElementById('fullName').value.trim();
+            const idInput = document.getElementById('studentId').value.trim();
+
+            if (!nameInput || !idInput) {
+                return;
+            }
+
+            studentInfo.name = nameInput;
+            studentInfo.id = idInput;
+
+            document.getElementById('registrationCard').classList.add('hidden');
+            document.getElementById('quizContainer').classList.remove('hidden');
+
+            renderWordBank();
+            loadQuestion(0);
+            startTimer();
+        }
+
+        function renderWordBank() {
+            const bankContainer = document.getElementById('wordBank');
+            bankContainer.innerHTML = '';
+
+            wordsList.forEach(word => {
+                const isUsed = userAnswers.includes(word);
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `word-btn border px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                    isUsed ? 'bg-slate-200 text-slate-400 border-slate-300 cursor-not-allowed' : 'bg-white text-slate-700 border-slate-300 hover:border-indigo-500 shadow-sm'
+                }`;
+                btn.innerText = word;
+                btn.disabled = isUsed;
+                btn.onclick = () => selectWord(word, btn);
+                bankContainer.appendChild(btn);
+            });
+        }
+
+        function selectWord(word, element) {
+            document.querySelectorAll('.word-btn').forEach(b => b.classList.remove('selected'));
+            selectedWord = word;
+            element.classList.add('selected');
+            document.getElementById('targetBlankBox').innerText = selectedWord;
+        }
+
+        function clearWordSelection() {
+            selectedWord = null;
+            document.querySelectorAll('.word-btn').forEach(b => b.classList.remove('selected'));
+            document.getElementById('targetBlankBox').innerText = userAnswers[currentQuestionIndex] || "[ Select a word above ]";
+        }
+
+        function loadQuestion(index) {
+            currentQuestionIndex = index;
+            const q = questions[index];
+
+            document.getElementById('questionProgress').innerText = `Blank ${index + 1} of ${questions.length}`;
+            document.getElementById('speakerTag').innerText = `Speaker: ${q.speaker}`;
+            document.getElementById('dialogueContextText').innerText = q.context;
+            document.getElementById('blankNumDisplay').innerText = q.blankIndex;
+
+            const existingAnswer = userAnswers[index];
+            const targetBox = document.getElementById('targetBlankBox');
+            targetBox.innerText = existingAnswer ? existingAnswer : "[ Select a word above ]";
+
+            const feedbackBox = document.getElementById('instantFeedback');
+            const placeWordBtn = document.getElementById('placeWordBtn');
+
+            if (answeredLocked[index]) {
+                placeWordBtn.disabled = true;
+                placeWordBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                feedbackBox.classList.remove('hidden');
+                const isCorrect = userAnswers[index] === q.correctAnswer;
+                feedbackBox.className = `mt-6 p-4 rounded-xl border ${isCorrect ? 'correct-bg' : 'incorrect-bg'}`;
+                feedbackBox.innerHTML = `
+                    <div class="flex items-center gap-2 font-bold mb-1">
+                        <i class="fa-solid ${isCorrect ? 'fa-circle-check text-emerald-600' : 'fa-circle-xmark text-red-600'}"></i>
+                        <span>${isCorrect ? 'Correct!' : 'Incorrect'}</span>
+                    </div>
+                    <p class="text-sm"><strong>Correct Answer:</strong> ${q.correctAnswer}</p>
+                    <p class="text-xs mt-1"><strong>Explanation:</strong> ${q.explanation}</p>
+                `;
+            } else {
+                placeWordBtn.disabled = false;
+                placeWordBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                feedbackBox.classList.add('hidden');
+            }
+
+            document.getElementById('backBtn').disabled = (index === 0);
+            if (index === questions.length - 1) {
+                document.getElementById('skipBtn').classList.add('hidden');
+                document.getElementById('submitBtn').classList.remove('hidden');
+            } else {
+                document.getElementById('skipBtn').classList.remove('hidden');
+                document.getElementById('submitBtn').classList.add('hidden');
+            }
+
+            clearWordSelection();
+        }
+
+        function applySelectedWord() {
+            if (answeredLocked[currentQuestionIndex]) return;
+
+            if (!selectedWord) {
+                alert("Please click a word from the word bank first.");
+                return;
+            }
+
+            userAnswers[currentQuestionIndex] = selectedWord;
+            answeredLocked[currentQuestionIndex] = true;
+
+            renderWordBank();
+            loadQuestion(currentQuestionIndex);
+        }
+
+        function navigateQuestion(direction) {
+            let target = currentQuestionIndex + direction;
+            if (target >= 0 && target < questions.length) {
+                loadQuestion(target);
+            }
+        }
+
+        function narrateCurrentStep() {
+            if (!('speechSynthesis' in window)) {
+                alert("Speech synthesis is not supported in this browser.");
+                return;
+            }
+
+            window.speechSynthesis.cancel();
+            const q = questions[currentQuestionIndex];
+            const textToSpeak = `${q.speaker} says: ${q.context.replace(/\(\d+\)\s*_+/g, 'blank')}`;
+
+            const utterance = new SpeechSynthesisUtterance(textToSpeak);
+            const voices = window.speechSynthesis.getVoices();
+            const britishVoice = voices.find(v => v.lang.includes('en-GB') || v.name.includes('British') || v.name.includes('UK'));
+            
+            if (britishVoice) {
+                utterance.voice = britishVoice;
+            }
+            utterance.rate = 0.9;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function submitAssessment() {
+            if (timerInterval) clearInterval(timerInterval);
+
+            let correctCount = 0;
+            questions.forEach((q, idx) => {
+                if (userAnswers[idx] === q.correctAnswer) {
+                    correctCount++;
+                }
+            });
+
+            const scorePercent = Math.round((correctCount / questions.length) * 100);
+
+            document.getElementById('quizContainer').classList.add('hidden');
+            document.getElementById('timerContainer').classList.add('hidden');
+            document.getElementById('resultsContainer').classList.remove('hidden');
+
+            document.getElementById('resFullName').innerText = studentInfo.name;
+            document.getElementById('resStudentId').innerText = studentInfo.id;
+            document.getElementById('resScore').innerText = `${correctCount} / ${questions.length} (${scorePercent}%)`;
+
+            const emailTo = "mesayferedegn2@gmail.com";
+            const subject = encodeURIComponent(`Assessment Score: ${studentInfo.name} (${studentInfo.id})`);
+            const body = encodeURIComponent(
+                `Teacher Results Summary:\n\n` +
+                `Student Name: ${studentInfo.name}\n` +
+                `ID Number: ${studentInfo.id}\n` +
+                `Score: ${correctCount}/${questions.length} (${scorePercent}%)\n\n` +
+                `Detailed Answers:\n` +
+                questions.map((q, i) => `Blank ${i+1}: Selected "${userAnswers[i] || 'None'}" | Correct: "${q.correctAnswer}"`).join('\n')
+            );
+            document.getElementById('emailBtn').href = `mailto:${emailTo}?subject=${subject}&body=${body}`;
+
+            const reviewContainer = document.getElementById('detailedReview');
+            reviewContainer.innerHTML = '';
+
+            questions.forEach((q, i) => {
+                const isCorrect = userAnswers[i] === q.correctAnswer;
+                const div = document.createElement('div');
+                div.className = `p-4 rounded-xl border ${isCorrect ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`;
+                div.innerHTML = `
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-xs font-bold uppercase ${isCorrect ? 'text-emerald-800' : 'text-red-800'}">Blank (${q.blankIndex}) - ${isCorrect ? 'Correct' : 'Incorrect'}</span>
+                        <span class="text-xs font-bold ${isCorrect ? 'text-emerald-600' : 'text-red-600'}">${isCorrect ? '+1 Point' : '0 Points'}</span>
+                    </div>
+                    <p class="text-sm font-medium text-slate-800 mb-1">${q.context}</p>
+                    <p class="text-xs text-slate-600"><strong>Your Answer:</strong> ${userAnswers[i] || 'Not answered'}</p>
+                    <p class="text-xs text-slate-600"><strong>Correct Answer:</strong> ${q.correctAnswer}</p>
+                    <p class="text-xs text-slate-500 mt-2 bg-white p-2 rounded border border-slate-200"><strong>Explanation:</strong> ${q.explanation}</p>
+                `;
+                reviewContainer.appendChild(div);
+            });
+        }
+    </script>
+</body>
+</html>
+```eof
